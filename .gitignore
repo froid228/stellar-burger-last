@@ -7,8 +7,6 @@ package.json
 src/services
 tsconfig.json
 webpack.config.js
-src/utils/burger-api.ts
-src/utils/cookie.ts
 cypress.config.ts
 jest.config.ts
 cypress
