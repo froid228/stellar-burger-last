@@ -2,7 +2,6 @@ node_modules
 .env
 .idea
 git
-src/components
 package-lock.json
 package.json
 src/services
