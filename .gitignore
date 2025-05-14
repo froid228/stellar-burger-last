@@ -7,6 +7,4 @@ package.json
 tsconfig.json
 webpack.config.js
 cypress.config.ts
-jest.config.ts
-cypress
 dist
