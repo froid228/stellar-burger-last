@@ -1,52 +1,72 @@
-import { getOrderByNumberApi } from '../../../utils/burger-api';
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { TOrder } from '@utils-types';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { getOrdersApi, orderBurgerApi } from '../../../utils/burger-api';
+import { TOrder } from '../../../utils/types';
 
-type TOrderState = {
+interface OrderState {
   orders: TOrder[];
-  orderByNumberResponse: TOrder | null;
-  request: boolean;
-  responseOrder: null;
+  currentOrder: TOrder | null;
+  loading: boolean;
   error: string | null;
-};
+}
 
-export const initialState: TOrderState = {
+const initialState: OrderState = {
   orders: [],
-  orderByNumberResponse: null,
-  request: false,
-  responseOrder: null,
+  currentOrder: null,
+  loading: false,
   error: null
 };
 
-export const getOrderByNumber = createAsyncThunk(
-  'order/byNumber',
-  async (number: number) => getOrderByNumberApi(number)
+export const fetchOrders = createAsyncThunk('order/fetchOrders', async () => {
+  const response = await getOrdersApi();
+  return response;
+});
+
+export const createOrder = createAsyncThunk(
+  'order/create',
+  async (ingredients: string[]) => {
+    const response = await orderBurgerApi(ingredients);
+    return response.order;
+  }
 );
 
-export const orderSlice = createSlice({
+const orderSlice = createSlice({
   name: 'order',
   initialState,
-  reducers: {},
-  selectors: {
-    getOrderState: (state) => state
+  reducers: {
+    clearCurrentOrder: (state) => {
+      state.currentOrder = null;
+    }
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getOrderByNumber.pending, (state) => {
+      // Fetch Orders
+      .addCase(fetchOrders.pending, (state) => {
+        state.loading = true;
         state.error = null;
-        state.request = true;
       })
-      .addCase(getOrderByNumber.rejected, (state, action) => {
-        state.error = action.error.message as string;
-        state.request = false;
+      .addCase(fetchOrders.fulfilled, (state, action) => {
+        state.loading = false;
+        state.orders = action.payload;
       })
-      .addCase(getOrderByNumber.fulfilled, (state, action) => {
+      .addCase(fetchOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to fetch orders';
+      })
+      // Create Order
+      .addCase(createOrder.pending, (state) => {
+        state.loading = true;
         state.error = null;
-        state.request = false;
-        state.orderByNumberResponse = action.payload.orders[0];
+      })
+      .addCase(createOrder.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentOrder = action.payload;
+      })
+      .addCase(createOrder.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to create order';
       });
   }
 });
 
-export const { getOrderState } = orderSlice.selectors;
-export default orderSlice.reducer;
+export const { clearCurrentOrder } = orderSlice.actions;
+export const orderReducer = orderSlice.reducer;

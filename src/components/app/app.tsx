@@ -17,8 +17,8 @@ import { Location, Route, Routes, useLocation } from 'react-router-dom';
 import { ProtectedRoute } from '../protected-route/protected-route';
 import { useDispatch } from '@store';
 import { useEffect, ReactNode } from 'react';
-import { getUser } from '../../services/slices/userSlice/userSlice';
-import { getIngredients } from '../../services/slices/ingredientSlice/ingredientSlice';
+import { fetchUser } from '../../services/slices/userSlice/userSlice';
+import { fetchIngredients } from '../../services/slices/ingredientSlice/ingredientSlice';
 import { CenteringComponent } from '../centering-component/centering-component';
 
 interface RouteConfig {
@@ -154,8 +154,8 @@ const App = () => {
   const background = location.state?.background;
 
   useEffect(() => {
-    dispatch(getUser());
-    dispatch(getIngredients());
+    dispatch(fetchUser());
+    dispatch(fetchIngredients());
   }, [dispatch]);
 
   return (
