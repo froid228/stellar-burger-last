@@ -2,9 +2,4 @@ node_modules
 .env
 .idea
 git
-package-lock.json
-package.json
-tsconfig.json
-webpack.config.js
-cypress.config.ts
 dist

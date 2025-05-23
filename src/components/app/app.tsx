@@ -23,10 +23,20 @@ import { CenteringComponent } from '../centering-component/centering-component';
 
 interface RouteConfig {
   path: string;
-  element: ReactNode | ((location: Location) => ReactNode);
+  element: ReactNode;
 }
 
-interface ModalRouteConfig extends RouteConfig {
+interface DynamicRouteProps {
+  children: (location: Location) => ReactNode;
+}
+
+const DynamicRoute: React.FC<DynamicRouteProps> = ({ children }) => {
+  const location = useLocation();
+  return <>{children(location)}</>;
+};
+
+interface ModalRouteConfig {
+  path: string;
   title: string | ((location: Location) => string);
   element: ReactNode;
   protected?: boolean;
@@ -42,18 +52,26 @@ const publicRoutes: RouteConfig[] = [
   { path: '/feed', element: <Feed /> },
   {
     path: '/feed/:number',
-    element: (location: Location) => (
-      <CenteringComponent title={`#${location.pathname.match(/\d+/)}`}>
-        <OrderInfo />
-      </CenteringComponent>
+    element: (
+      <DynamicRoute>
+        {(location) => (
+          <CenteringComponent title={`#${location.pathname.match(/\d+/)}`}>
+            <OrderInfo />
+          </CenteringComponent>
+        )}
+      </DynamicRoute>
     )
   },
   {
     path: '/ingredients/:id',
-    element: () => (
-      <CenteringComponent title="Детали ингредиента">
-        <IngredientDetails />
-      </CenteringComponent>
+    element: (
+      <DynamicRoute>
+        {() => (
+          <CenteringComponent title="Детали ингредиента">
+            <IngredientDetails />
+          </CenteringComponent>
+        )}
+      </DynamicRoute>
     )
   }
 ];
@@ -70,10 +88,14 @@ const authRoutes: RouteConfig[] = [
   { path: '/profile/orders', element: <ProfileOrders /> },
   {
     path: '/profile/orders/:number',
-    element: (location: Location) => (
-      <CenteringComponent title={`#${location.pathname.match(/\d+/)}`}>
-        <OrderInfo />
-      </CenteringComponent>
+    element: (
+      <DynamicRoute>
+        {(location) => (
+          <CenteringComponent title={`#${location.pathname.match(/\d+/)}`}>
+            <OrderInfo />
+          </CenteringComponent>
+        )}
+      </DynamicRoute>
     )
   }
 ];
@@ -112,17 +134,15 @@ const ModalRoutes: React.FC<ModalRoutesProps> = ({ onClose }) => {
           </Modal>
         );
 
-        return isProtected ? (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <ProtectedRoute onlyUnAuth={false} element={modalElement} />
-            }
-          />
-        ) : (
-          <Route key={path} path={path} element={modalElement} />
-        );
+        if (isProtected) {
+          return (
+            <Route key={path} element={<ProtectedRoute onlyUnAuth={false} />}>
+              <Route path={path} element={modalElement} />
+            </Route>
+          );
+        }
+        
+        return <Route key={path} path={path} element={modalElement} />;
       })}
     </Routes>
   );
@@ -143,11 +163,7 @@ const App = () => {
       <AppHeader />
       <Routes location={background || location}>
         {publicRoutes.map(({ path, element }) => (
-          <Route
-            key={path}
-            path={path}
-            element={typeof element === 'function' ? element(location) : element}
-          />
+          <Route key={path} path={path} element={element} />
         ))}
         
         <Route element={<ProtectedRoute onlyUnAuth />}>
@@ -158,11 +174,7 @@ const App = () => {
 
         <Route element={<ProtectedRoute onlyUnAuth={false} />}>
           {authRoutes.map(({ path, element }) => (
-            <Route
-              key={path}
-              path={path}
-              element={typeof element === 'function' ? element(location) : element}
-            />
+            <Route key={path} path={path} element={element} />
           ))}
         </Route>
 
